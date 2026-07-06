@@ -17,6 +17,169 @@ from .defineInterpolationWindow import defineInterpolationWindow
 
 #=========================================================================================
 class displayInterpolationWindow(QWidget):
+
+    #---------------------------------------------------------------------------------------------
+    def updatePointersPlot(self):
+    
+        self.pointersPlot_ax.clear()
+        for line in self.pointersPlot_axGradient.lines:
+            line.remove()
+    
+        legendHandles = []
+    
+        line, = self.pointersPlot_ax.plot(
+            self.X2Coords,
+            self.X1Coords,
+            color='steelblue',
+            linewidth=1,
+            label='Pointers'
+        )
+        points = self.pointersPlot_ax.scatter(
+            self.X2Coords,
+            self.X1Coords,
+            s=10,
+            marker='o',
+            color='steelblue'
+        )
+    
+        self.pointersPlot_ax.patch.set_visible(False)
+        self.pointersPlot_ax.grid(
+            visible=True,
+            which='major',
+            color='lightgray',
+            linestyle='dashed',
+            linewidth=1
+        )
+        self.pointersPlot_ax.set_xlabel('X')
+        self.pointersPlot_ax.set_ylabel(self.X1Name, color='steelblue')
+    
+        legendHandles.append(Line2D([0], [0], color='steelblue', label='Pointers'))
+        self.pointersPlot_ax.line_points_pairs = []
+        self.pointersPlot_ax.line_points_pairs.append((line, points))
+    
+        self.pointersPlot_axGradient.set_ylabel(
+            'Distorted / Reference gradient',
+            color='darkorange'
+        )
+        self.pointersPlot_axGradient.line_points_pairs = []
+    
+        npoints = self.gradientSamplePoints_spin.value()
+        X2CoordsValues = np.linspace(self.X2Coords[0], self.X2Coords[-1], npoints)
+    
+        f_1to2, f_2to1 = defineInterpolationWindow.defineInterpolationFunctions(
+            self.X1Coords,
+            self.X2Coords,
+            interpolationMode='Linear'
+        )
+        gradientLinear = np.gradient(
+            X2CoordsValues,
+            f_2to1(X2CoordsValues)
+        ).astype(np.float32)
+    
+        line1, = self.pointersPlot_axGradient.plot(
+            X2CoordsValues,
+            gradientLinear,
+            color='darkorange',
+            lw=1,
+            label='Linear'
+        )
+        legendHandles.append(Line2D([0], [0], color='darkorange', label='Linear'))
+    
+        f_1to2, f_2to1 = defineInterpolationWindow.defineInterpolationFunctions(
+            self.X1Coords,
+            self.X2Coords,
+            interpolationMode='PCHIP'
+        )
+        gradientPCHIP = np.gradient(
+            X2CoordsValues,
+            f_2to1(X2CoordsValues)
+        ).astype(np.float32)
+    
+        line2, = self.pointersPlot_axGradient.plot(
+            X2CoordsValues,
+            gradientPCHIP,
+            color='darkorange',
+            linestyle='dashed',
+            lw=1,
+            label='PCHIP'
+        )
+        legendHandles.append(
+            Line2D([0], [0], color='darkorange', linestyle='dashed', label='PCHIP')
+        )
+    
+        legend = self.pointersPlot_ax.legend(handles=legendHandles)
+    
+        self.pointersPlot_ax.map_legend_to_line = {}
+        line_map = {
+            "Pointers": line,
+            "Linear": line1,
+            "PCHIP": line2,
+        }
+    
+        for legend_line in legend.get_lines():
+            label = legend_line.get_label()
+            legend_line.set_picker(5)
+            self.pointersPlot_ax.map_legend_to_line[legend_line] = line_map[label]
+    
+        self.interactive_pointersPlot.fig.canvas.draw()
+
+    #---------------------------------------------------------------------------------------------
+    def updateGradients(self):
+    
+        self.gradients_table.clearContents()
+    
+        if len(self.X1Coords) < 2:
+            self.gradients_table.setRowCount(0)
+            self.gradients_table.setColumnCount(0)
+            return
+    
+        npoints = self.gradientSamplePoints_spin.value()
+    
+        X2Values = np.linspace(self.X2Coords[0], self.X2Coords[-1], npoints)
+    
+        # Linear
+        f_1to2, f_2to1 = defineInterpolationWindow.defineInterpolationFunctions(
+            self.X1Coords,
+            self.X2Coords,
+            interpolationMode='Linear'
+        )
+        X1Linear = f_2to1(X2Values)
+        gradientLinear = np.gradient(X2Values, X1Linear).astype(np.float32)
+    
+        # PCHIP
+        f_1to2, f_2to1 = defineInterpolationWindow.defineInterpolationFunctions(
+            self.X1Coords,
+            self.X2Coords,
+            interpolationMode='PCHIP'
+        )
+        X1PCHIP = f_2to1(X2Values)
+        gradientPCHIP = np.gradient(X2Values, X1PCHIP).astype(np.float32)
+    
+        self.gradients_table.setRowCount(npoints)
+        self.gradients_table.setColumnCount(3)
+        self.gradients_table.setHorizontalHeaderLabels([
+            "Distorted: X",
+            "Gradient (Linear)",
+            "Gradient (PCHIP)",
+        ])
+    
+        for i in range(npoints):
+            self.gradients_table.setItem(i, 0, QTableWidgetItem(f'{X2Values[i]:.6f}'))
+            self.gradients_table.setItem(i, 1, QTableWidgetItem(f'{gradientLinear[i]:.6f}'))
+            self.gradients_table.setItem(i, 2, QTableWidgetItem(f'{gradientPCHIP[i]:.6f}'))
+    
+            background_color = QColor('white') if i % 2 == 0 else QColor('whitesmoke')
+            for j in range(3):
+                self.gradients_table.item(i, j).setBackground(background_color)
+    
+        self.gradients_table.resizeColumnsToContents()
+        self.gradients_table.set_italic_headers()
+
+    #---------------------------------------------------------------------------------------------
+    def updateGradientViews(self):
+        self.updatePointersPlot()
+        self.updateGradients()
+
     #---------------------------------------------------------------------------------------------
     def __init__(self, Id, open_displayWindows, item):
         super().__init__()
@@ -30,6 +193,7 @@ class displayInterpolationWindow(QWidget):
         self.X1Coords = self.interpolationDict['X1Coords']
         self.X2Coords = self.interpolationDict['X2Coords']
         self.X1Name = self.interpolationDict['X1Name']
+        self.gradientSamplePoints = 100
 
         title = 'Display INTERPOLATION : ' + self.Id
         self.setWindowTitle(title)
@@ -44,7 +208,7 @@ class displayInterpolationWindow(QWidget):
         pointers_table.setRowCount(len(self.X1Coords))
         pointers_table.setColumnCount(2)
         pointers_table.setHorizontalHeaderLabels([
-            f"Distorded: X",
+            f"Distorted: X",
             f"Reference: {self.X1Name}", 
         ])
 
@@ -78,54 +242,40 @@ class displayInterpolationWindow(QWidget):
         self.pointersPlot_axGradient.spines['bottom'].set_visible(False)
         self.pointersPlot_axGradient.set_zorder(-10)
 
-        legendHandles = []
-
-        line, = self.pointersPlot_ax.plot(self.X2Coords, self.X1Coords, color='steelblue', linewidth=1, label='Pointers')
-        points = self.pointersPlot_ax.scatter(self.X2Coords, self.X1Coords, s=10, marker='o', color='steelblue')
-
-        self.pointersPlot_ax.patch.set_visible(False)
-        self.pointersPlot_ax.grid(visible=True, which='major', color='lightgray', linestyle='dashed', linewidth=1)
-        self.pointersPlot_ax.set_xlabel('X')
-        self.pointersPlot_ax.set_ylabel(self.X1Name, color='steelblue')
-        legendHandle = Line2D([0], [0], color='steelblue', label='Pointers')
-        legendHandles.append(legendHandle)
-        self.pointersPlot_ax.line_points_pairs.append((line, points))
-
-        self.pointersPlot_axGradient.set_ylabel('Gradients (dx/dy)', color='darkorange')
-        self.pointersPlot_axGradient.line_points_pairs = []
         self.interactive_pointersPlot.axs.append(self.pointersPlot_axGradient)
-
-        X2CoordsValues = np.linspace(self.X2Coords[0], self.X2Coords[-1], 100)
-
-        (f_1to2, f_2to1) = defineInterpolationWindow.defineInterpolationFunctions(self.X1Coords, self.X2Coords, interpolationMode='Linear')
-        gradientLinear = np.gradient(X2CoordsValues, f_2to1(X2CoordsValues)).astype(np.float32)      # to avoid unnecessary precision
-        line1, = self.pointersPlot_axGradient.plot(X2CoordsValues, gradientLinear, color='darkorange', lw=1, label='Linear')
-        legendHandle = Line2D([0], [0], color='darkorange', label='Linear')
-        legendHandles.append(legendHandle)
-
-        (f_1to2, f_2to1) = defineInterpolationWindow.defineInterpolationFunctions(self.X1Coords, self.X2Coords, interpolationMode='PCHIP')
-        gradientPCHIP = np.gradient(X2CoordsValues, f_2to1(X2CoordsValues)).astype(np.float32)       # to avoid unnecessary precision
-        line2, = self.pointersPlot_axGradient.plot(X2CoordsValues, gradientPCHIP, color='darkorange', linestyle='dashed', lw=1, label='PCHIP')
-        legendHandle = Line2D([0], [0], color='darkorange', linestyle='dashed', label='PCHIP')
-        legendHandles.append(legendHandle)
-
-        legend = self.pointersPlot_ax.legend(handles=legendHandles)
-        line_map = {
-            "Pointers": line,
-            "Linear": line1,
-            "PCHIP": line2,
-        }
-        for legend_line in legend.get_lines():
-            label = legend_line.get_label()
-            legend_line.set_picker(5)
-            self.pointersPlot_ax.map_legend_to_line[legend_line] = line_map[label]
-
-        self.interactive_pointersPlot.fig.canvas.draw()
-
+        
         canvas = FigureCanvas(self.interactive_pointersPlot.fig)
         pointersPlot_layout.addWidget(canvas)
-
+        
         pointersPlot_tab.setLayout(pointersPlot_layout)
+
+        #----------------------------------------------
+        gradients_tab = QWidget()
+        gradients_layout = QVBoxLayout()
+        
+        gradients_control_layout = QHBoxLayout()
+        
+        self.gradientSamplePoints_label = QLabel("Sample points:")
+        
+        self.gradientSamplePoints_spin = QSpinBox()
+        self.gradientSamplePoints_spin.setMinimum(10)
+        self.gradientSamplePoints_spin.setMaximum(10000)
+        self.gradientSamplePoints_spin.setSingleStep(10)
+        self.gradientSamplePoints_spin.setValue(self.gradientSamplePoints)
+        
+        gradients_control_layout.addWidget(self.gradientSamplePoints_label)
+        gradients_control_layout.addWidget(self.gradientSamplePoints_spin)
+        gradients_control_layout.addStretch()
+        
+        self.gradients_table = CustomQTableWidget()
+        
+        gradients_layout.addLayout(gradients_control_layout)
+        gradients_layout.addWidget(self.gradients_table)
+        
+        gradients_tab.setLayout(gradients_layout)
+       
+        self.gradientSamplePoints_spin.valueChanged.connect(self.updateGradientViews)
+        self.updateGradientViews()
 
         #----------------------------------------------
         info_tab = QWidget()
@@ -160,6 +310,7 @@ class displayInterpolationWindow(QWidget):
         #----------------------------------------------
         self.tabs.addTab(pointers_tab, "Pointers")
         self.tabs.addTab(pointersPlot_tab, "Pointers plot")
+        self.tabs.addTab(gradients_tab, "Gradients")
         self.tabs.addTab(info_tab, "Info")
         self.tabs.setCurrentIndex(1)
 

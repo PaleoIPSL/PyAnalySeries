@@ -1,3 +1,6 @@
+ * 6.36
+   * Add Gradients tab to interpolation windows (defineInterpolationWindow and displayInterpolationWindow) with Linear/PCHIP gradient values, configurable sampling resolution, and spreadsheet export via copy/paste
+   * Fix typo: 'Distorded' to 'Distorted'
  * 6.35
    * Add persistent axis settings (scale type and inversion state) saved in worksheets
    * Add per-feature configuration of interactivePlot context menu actions depending on display window type and shared-axis configuration

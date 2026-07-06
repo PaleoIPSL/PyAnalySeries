@@ -45,7 +45,7 @@ class importDataWindow(QWidget):
 
         self.importPointers_button = QPushButton("Import pointers", self)
         self.importPointers_button.setStyleSheet("padding: 4px 12px;")
-        self.importPointers_button.setToolTip("(Distorded, Reference)")
+        self.importPointers_button.setToolTip("(Distorted, Reference)")
         self.importSeries_button = QPushButton("Import series", self)
         self.importSeries_button.setStyleSheet("padding: 4px 12px;")
         self.importSeries_button.setToolTip("(X,Y) or (X,Y1,Y2,...)")
@@ -126,7 +126,7 @@ class importDataWindow(QWidget):
             QMessageBox.critical(
                 self, 
                 "Invalid Data", 
-                "At least 2 columns (X,Y), (X,Y1,Y2,...) or (X Reference, X Distorded)"
+                "At least 2 columns (X,Y), (X,Y1,Y2,...) or (X Reference, X Distorted)"
             )
             return
 
@@ -309,7 +309,7 @@ class importDataWindow(QWidget):
     def import_pointers(self):
 
         if self.data_table.columnCount() < 2:
-            QMessageBox.warning(self, "Import pointers", "Import not possible. Expected format is 2 columns (X Reference, X Distorded)")
+            QMessageBox.warning(self, "Import pointers", "Import not possible. Expected format is 2 columns (X Reference, X Distorted)")
             return
 
         if not self.data_table_check(): return
@@ -318,7 +318,7 @@ class importDataWindow(QWidget):
         header = self.data_table.horizontalHeader()
         column_order = [header.logicalIndex(i) for i in range(self.data_table.columnCount())]
 
-        # Distorded (X2Coords), Reference (X1Coords) as columns
+        # Distorted (X2Coords), Reference (X1Coords) as columns
         X2Coords = [parse_real(self.data_table.item(row, column_order[0]).text()) for row in range(self.data_table.rowCount())] 
         X1Coords = [parse_real(self.data_table.item(row, column_order[1]).text()) for row in range(self.data_table.rowCount())] 
         X2Name = self.data_table.horizontalHeaderItem(column_order[0]).text()

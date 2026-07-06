@@ -53,6 +53,7 @@ class defineInterpolationWindow(QWidget):
         self.interpolationMode = 'Linear'
         self.axsInterp = None
         self.second_xaxis = None
+        self.gradientSamplePoints = 100
 
         title = 'Define INTERPOLATION : ' + self.Id
         self.setWindowTitle(title)
@@ -119,9 +120,39 @@ class defineInterpolationWindow(QWidget):
         plots_tab.setLayout(plots_layout)
 
         #----------------------------------------------
+        gradients_tab = QWidget()
+        gradients_layout = QVBoxLayout()
+        
+        gradients_control_layout = QHBoxLayout()
+        
+        self.gradientSamplePoints_label = QLabel("Sample points:")
+        self.gradientSamplePoints_spin = QSpinBox()
+        self.gradientSamplePoints_spin.setMinimum(10)
+        self.gradientSamplePoints_spin.setMaximum(10000)
+        self.gradientSamplePoints_spin.setValue(self.gradientSamplePoints)
+        self.gradientSamplePoints_spin.setSingleStep(10)
+        self.gradientSamplePoints_spin.setToolTip(
+            "Number of points used to evaluate interpolation gradients"
+        )
+        
+        gradients_control_layout.addWidget(self.gradientSamplePoints_label)
+        gradients_control_layout.addWidget(self.gradientSamplePoints_spin)
+        gradients_control_layout.addStretch()
+        
+        self.gradients_table = CustomQTableWidget()
+        
+        gradients_layout.addLayout(gradients_control_layout)
+        gradients_layout.addWidget(self.gradients_table)
+        
+        gradients_tab.setLayout(gradients_layout)
+        
+        self.gradientSamplePoints_spin.valueChanged.connect(self.updateGradientViews)
+
+        #----------------------------------------------
         self.tabs.addTab(plots_tab, "Plots")
         self.tabs.addTab(pointers_tab, "Pointers")
         self.tabs.addTab(pointersPlot_tab, "Pointers plot")
+        self.tabs.addTab(gradients_tab, "Gradients")
         self.tabs.setCurrentIndex(0)
 
         main_layout = QVBoxLayout()
@@ -155,7 +186,7 @@ class defineInterpolationWindow(QWidget):
         #----------------------------------------------
         control_layout2 = QHBoxLayout()
 
-        self.selectSeriesDist_combo_label = QLabel("Distorded series:")
+        self.selectSeriesDist_combo_label = QLabel("Distorted series:")
         self.selectSeriesDist_combo_label.setFixedWidth(120)
         self.selectSeriesDist_combo = QComboBox()
         font = QFont("Courier New")
@@ -398,7 +429,8 @@ class defineInterpolationWindow(QWidget):
         self.pointersPlot_axGradient.line_points_pairs = []
         self.interactive_pointersPlot.axs.append(self.pointersPlot_axGradient)
 
-        X2CoordsValues = np.linspace(self.X2Coords[0], self.X2Coords[-1], 100)
+        npoints = self.gradientSamplePoints_spin.value()
+        X2CoordsValues = np.linspace(self.X2Coords[0], self.X2Coords[-1], npoints)
 
         f_1to2, f_2to1 = self.defineInterpolationFunctions(self.X1Coords, self.X2Coords, interpolationMode='Linear')
         gradientLinear = np.gradient(X2CoordsValues, f_2to1(X2CoordsValues)).astype(np.float32)      # to avoid unnecessary precision
@@ -436,7 +468,7 @@ class defineInterpolationWindow(QWidget):
         self.pointers_table.setRowCount(len(self.X1Coords))
         self.pointers_table.setColumnCount(2)
         self.pointers_table.setHorizontalHeaderLabels([
-            f"Distorded: X",
+            f"Distorted: X",
             f"Reference: {self.X1Name}", 
         ])
         for i in range(len(self.X1Coords)):
@@ -449,13 +481,71 @@ class defineInterpolationWindow(QWidget):
         self.pointers_table.set_italic_headers()
 
         self.updatePointersPlot()
+        self.updateGradients()
+
+    #---------------------------------------------------------------------------------------------
+    def updateGradients(self):
+    
+        self.gradients_table.clearContents()
+    
+        if len(self.X1Coords) < 2:
+            self.gradients_table.setRowCount(0)
+            self.gradients_table.setColumnCount(0)
+            return
+    
+        npoints = self.gradientSamplePoints_spin.value()
+    
+        X2Values = np.linspace(self.X2Coords[0], self.X2Coords[-1], npoints)
+    
+        # Linear
+        f_1to2, f_2to1 = self.defineInterpolationFunctions(
+            self.X1Coords,
+            self.X2Coords,
+            interpolationMode='Linear'
+        )
+        X1Linear = f_2to1(X2Values)
+        gradientLinear = np.gradient(X2Values, X1Linear).astype(np.float32)
+    
+        # PCHIP
+        f_1to2, f_2to1 = self.defineInterpolationFunctions(
+            self.X1Coords,
+            self.X2Coords,
+            interpolationMode='PCHIP'
+        )
+        X1PCHIP = f_2to1(X2Values)
+        gradientPCHIP = np.gradient(X2Values, X1PCHIP).astype(np.float32)
+    
+        self.gradients_table.setRowCount(npoints)
+        self.gradients_table.setColumnCount(3)
+        self.gradients_table.setHorizontalHeaderLabels([
+            f"Distorted: X",
+            "Gradient Linear",
+            "Gradient PCHIP",
+        ])
+    
+        for i in range(npoints):
+            self.gradients_table.setItem(i, 0, QTableWidgetItem(f'{X2Values[i]:.6f}'))
+            self.gradients_table.setItem(i, 1, QTableWidgetItem(f'{gradientLinear[i]:.6f}'))
+            self.gradients_table.setItem(i, 2, QTableWidgetItem(f'{gradientPCHIP[i]:.6f}'))
+    
+            background_color = QColor('white') if i % 2 == 0 else QColor('whitesmoke')
+            for j in range(3):
+                self.gradients_table.item(i, j).setBackground(background_color)
+    
+        self.gradients_table.resizeColumnsToContents()
+        self.gradients_table.set_italic_headers()
+
+    #---------------------------------------------------------------------------------------------
+    def updateGradientViews(self):
+        self.updatePointersPlot()
+        self.updateGradients()
 
     #---------------------------------------------------------------------------------------------
     def drawPlots(self):
 
         #----------------------------------------------------
         # self.axs[0] --> Reference 
-        # self.axs[1] --> Distorded to interpolate
+        # self.axs[1] --> Distorted to interpolate
 
         #----------------------------------------------------
         self.itemRef = self.items[self.selectSeriesRef_combo.currentIndex()]
