@@ -1,3 +1,5 @@
+ * 6.37
+   * Fix Copy shortcut compatibility (Ctrl+C / Cmd+C) across PyQt5 and PyQt6
  * 6.36
    * Add Gradients tab to interpolation windows (defineInterpolationWindow and displayInterpolationWindow) with Linear/PCHIP gradient values, configurable sampling resolution, and spreadsheet export via copy/paste
    * Fix typo: 'Distorded' to 'Distorted'

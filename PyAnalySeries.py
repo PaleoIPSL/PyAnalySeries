@@ -59,7 +59,7 @@ else:
     filesName = None
 
 #========================================================================================
-version = 'v6.36'
+version = 'v6.37'
 
 open_ws = {}
 open_displayWindows = {} 

@@ -34,9 +34,9 @@ class CustomQTableWidget(QTableWidget):
 
     def keyPressEvent(self, event):
         """
-        Handle key press events, particularly CTRL+c for copying.
+        Handle standard Copy shortcut (Ctrl+C on Windows/Linux, Cmd+C on macOS).
         """
-        if event.key() == Qt.Key.Key_C and Qt.KeyboardModifier.ControlModifier in event.modifiers():
+        if event.matches(QKeySequenceCopy):
             self.copy_to_clipboard()
         else:
             # Pass other events to the default handler

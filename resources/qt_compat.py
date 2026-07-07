@@ -59,6 +59,7 @@ if IS_QT6:
     SP_DialogApplyButton = QStyle.StandardPixmap.SP_DialogApplyButton
 
     QKeySequenceClose = QKeySequence.StandardKey.Close
+    QKeySequenceCopy = QKeySequence.StandardKey.Copy
 
 #----------------------------------------------
 else:
@@ -100,6 +101,7 @@ else:
     SP_DialogApplyButton = QStyle.SP_DialogApplyButton
 
     QKeySequenceClose = QKeySequence.Close
+    QKeySequenceCopy = QKeySequence.Copy
 
 #========================================================================================
 def app_exec(app):
