@@ -256,17 +256,16 @@ class computePowerSpectrumWindow(QWidget):
 
             <b>Exposed parameter</b><br>
             <code>freq</code>: frequency-grid strategy used by Pyleoclim.<br>
-            In this interface, <code>Auto</code> is mapped to <code>log</code>.<br><br>
 
             <b>Backend call</b><br>
             <code>ts.standardize().spectral(method="lomb_scargle", freq=...)</code><br><br>
 
             <b>Backend defaults not exposed here</b><br>
-            <code>freq=None</code>, <code>freq_method='lomb_scargle'</code>,
-            <code>freq_kwargs=None</code>, <code>n50=3</code>,
-            <code>window='hann'</code>, <code>detrend=None</code>,
-            <code>sg_kwargs=None</code>, <code>gaussianize=False</code>,
-            <code>standardize=True</code>, <code>average='mean'</code><br><br>
+            <code>freq=None</code>, <code>freq_kwargs=None</code>,
+            <code>n50=3</code>, <code>window='hann'</code>,
+            <code>detrend=None</code>, <code>sg_kwargs=None</code>,
+            <code>gaussianize=False</code>, <code>standardize=True</code>,
+            <code>average='mean'</code><br><br>
 
             <b>Documentation</b><br>
             <a href="{self.DOC_LOMB}">pyleoclim.utils.spectral.lomb_scargle</a>
@@ -386,7 +385,7 @@ class computePowerSpectrumWindow(QWidget):
         layout.setLabelAlignment(AlignLeft)
 
         self.lomb_freq_combo = QComboBox(self)
-        self.lomb_freq_combo.addItems(['Auto', 'log', 'lomb_scargle', 'welch', 'scale', 'nfft'])
+        self.lomb_freq_combo.addItems(['log', 'lomb_scargle', 'welch', 'scale', 'nfft'])
         self.lomb_freq_combo.setFixedWidth(160)
 
         layout.addRow('Frequency-grid method:', self.lomb_freq_combo)
@@ -442,10 +441,10 @@ class computePowerSpectrumWindow(QWidget):
             self.mtm_nw_sb.setValue(4.0)
     
         elif method == self.METHOD_LOMB:
-            self.lomb_freq_combo.setCurrentText('Auto')
+            self.lomb_freq_combo.setCurrentText('log')
     
         elif method == self.METHOD_WWZ:
-            self.wwz_freq_combo.setCurrentText('Auto')
+            self.wwz_freq_combo.setCurrentText('log')
 
     #---------------------------------------------------------------------------------------------
     def delayed_update(self):
@@ -519,18 +518,16 @@ class computePowerSpectrumWindow(QWidget):
             history = f'Spectral estimation: method=MTM; NW={nw:.1f}'
 
         elif method_label == self.METHOD_LOMB:
-            freq_choice = self.lomb_freq_combo.currentText()
-            freq = 'log' if freq_choice == 'Auto' else freq_choice
+            freq = self.lomb_freq_combo.currentText()
             psd = ts.standardize().spectral(
                     method='lomb_scargle', 
                     freq=freq
             )
-            label = f'Lomb-Scargle | freq={freq_choice}'
-            history = f'Spectral estimation: method=Lomb-Scargle; freq={freq_choice}'
+            label = f'Lomb-Scargle | freq={freq}'
+            history = f'Spectral estimation: method=Lomb-Scargle; freq={freq}'
 
         elif method_label == self.METHOD_WWZ:
-            freq_choice = self.wwz_freq_combo.currentText()
-            freq_method = 'log' if freq_choice == 'Auto' else freq_choice
+            freq_method = self.wwz_freq_combo.currentText()
             c = self.wwz_c_sb.value()
             psd = ts.standardize().spectral(
                 method='wwz',
@@ -539,8 +536,8 @@ class computePowerSpectrumWindow(QWidget):
                     'c': c
                 }
             )
-            label = f'Wavelet (WWZ) | freq={freq_choice} | c={c}'
-            history = f'Spectral estimation: method=Wavelet (WWZ); freq={freq_choice}; c={c}'
+            label = f'Wavelet (WWZ) | freq_method={freq_method} | c={c}'
+            history = f'Spectral estimation: method=Wavelet (WWZ); freq_method={freq_method}; c={c}'
 
         else:
             raise ValueError(f'Unknown spectral method: {method_label}')

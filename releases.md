@@ -1,3 +1,5 @@
+ * 6.38
+   * Clarify frequency-grid settings for Lomb-Scargle and WWZ spectral methods
  * 6.37
    * Fix Copy shortcut compatibility (Ctrl+C / Cmd+C) across PyQt5 and PyQt6
  * 6.36
