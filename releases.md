@@ -1,3 +1,5 @@
+ * 6.39
+   * Improved Process menu layout and PyQt5/PyQt6 compatibility
  * 6.38
    * Clarify frequency-grid settings for Lomb-Scargle and WWZ spectral methods
  * 6.37

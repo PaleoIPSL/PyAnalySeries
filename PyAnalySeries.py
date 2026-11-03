@@ -59,7 +59,7 @@ else:
     filesName = None
 
 #========================================================================================
-version = 'v6.38'
+version = 'v6.39'
 
 open_ws = {}
 open_displayWindows = {} 
@@ -2028,56 +2028,55 @@ display_menu.addAction(displayTogetherSeries_action)
 display_menu.addAction(displayStackedSeries_action)
 display_menu.addAction(close_all_action)
 
-def add_section(menu, text, first=False):
-    container = QWidget()
-    layout = QVBoxLayout(container)
-    layout.setContentsMargins(12, 6, 12, 6)
-    layout.setSpacing(4)
+#----------------------------------------------
+def add_menu_action(menu, action):
+    action.setText("\u00a0" * 7 + action.text())
+    menu.addAction(action)
 
-    # --- Top line (only if not first section) ---
-    if not first:
-        top_line = QFrame()
-        top_line.setFixedHeight(2)
-        top_line.setStyleSheet("background-color: #999;")
-        layout.addWidget(top_line)
+class ProcessMenu(QMenu):
+    def mouseReleaseEvent(self, event):
+        action = self.actionAt(event.pos())
 
-    # --- Label ---
-    label = QLabel(text)
-    label.setFont(menu.font())
-    label.setStyleSheet("color: black;")
-    layout.addWidget(label)
+        if action and action.property("is_section"):
+            event.accept()
+            return
 
-    action = QWidgetAction(menu)
-    action.setDefaultWidget(container)
+        super().mouseReleaseEvent(event)
+
+def add_section(menu, text):
+    action = QAction(text, menu)
+    action.setProperty("is_section", True)
+
+    font = QFont(menu.font())
+    font.setBold(True)
+    action.setFont(font)
+
     menu.addAction(action)
 
 #----------------------------------------------
-process_menu = menu_bar.addMenu("Process")
+process_menu = ProcessMenu("Process", main_window)
+menu_bar.addMenu(process_menu)
 
 # ----------------
-add_section(process_menu, "Transforms", first=True)
+add_section(process_menu, "Transforms")
 
 computeAggregate_action = QAction("Edit / Aggregate / Clean ...", main_window)
 computeAggregate_action.setShortcut("Ctrl+e")
 computeAggregate_action.triggered.connect(compute_aggregate)
-process_menu.addAction(computeAggregate_action)
-
-process_menu.addSeparator()
+add_menu_action(process_menu, computeAggregate_action)
 
 computeDetrend_action = QAction("Detrend ...", main_window)
 computeDetrend_action.triggered.connect(compute_detrend)
-process_menu.addAction(computeDetrend_action)
-
-process_menu.addSeparator()
+add_menu_action(process_menu, computeDetrend_action)
 
 defineSampling_action = QAction("Define Sampling ...", main_window)
 defineSampling_action.setShortcut("Ctrl+a")
 defineSampling_action.triggered.connect(define_sampling)
-process_menu.addAction(defineSampling_action)
+add_menu_action(process_menu, defineSampling_action)
 
 applySampling_action = QAction("Apply Sampling", main_window)
 applySampling_action.triggered.connect(apply_sampling)
-process_menu.addAction(applySampling_action)
+add_menu_action(process_menu, applySampling_action)
 
 # ----------------
 add_section(process_menu, "Interpolation")
@@ -2085,16 +2084,16 @@ add_section(process_menu, "Interpolation")
 defineInterpolation_action = QAction("Define Interpolation ...", main_window)
 defineInterpolation_action.setShortcut("Ctrl+i")
 defineInterpolation_action.triggered.connect(define_interpolation)
-process_menu.addAction(defineInterpolation_action)
+add_menu_action(process_menu, defineInterpolation_action)
 
 applyInterpolationLinear_action = QAction("Apply Interpolation Linear", main_window)
 applyInterpolationLinear_action.triggered.connect(lambda: apply_interpolation("Linear"))
-process_menu.addAction(applyInterpolationLinear_action)
+add_menu_action(process_menu, applyInterpolationLinear_action)
 
 applyInterpolationPCHIP_action = QAction("Apply Interpolation PCHIP", main_window)
 applyInterpolationPCHIP_action.setToolTip("This action applies PCHIP interpolation to the selected data.")
 applyInterpolationPCHIP_action.triggered.connect(lambda: apply_interpolation("PCHIP"))
-process_menu.addAction(applyInterpolationPCHIP_action)
+add_menu_action(process_menu, applyInterpolationPCHIP_action)
 
 # ----------------
 add_section(process_menu, "X-Domain Filter")
@@ -2102,25 +2101,25 @@ add_section(process_menu, "X-Domain Filter")
 defineFilter_action = QAction("Define Smoothing Average ...", main_window)
 defineFilter_action.setShortcut("Ctrl+f")
 defineFilter_action.triggered.connect(define_filter)
-process_menu.addAction(defineFilter_action)
+add_menu_action(process_menu, defineFilter_action)
 
 applyFilter_action = QAction("Apply Smoothing Average", main_window)
 applyFilter_action.triggered.connect(apply_filter)
-process_menu.addAction(applyFilter_action)
+add_menu_action(process_menu, applyFilter_action)
 
 # ----------------
 add_section(process_menu, "Frequency-Domain Filter")
 
 computeFreqFilter_action = QAction("Frequency Filter ...", main_window)
 computeFreqFilter_action.triggered.connect(compute_frequencyFilter)
-process_menu.addAction(computeFreqFilter_action)
+add_menu_action(process_menu, computeFreqFilter_action)
 
 # ----------------
 add_section(process_menu, "Spectral Estimation")
 
 computePowerSpectrum_action = QAction("Power Spectrum (PSD) ...", main_window)
 computePowerSpectrum_action.triggered.connect(compute_powerSpectrum)
-process_menu.addAction(computePowerSpectrum_action)
+add_menu_action(process_menu, computePowerSpectrum_action)
 
 #----------------------------------------------
 settings_menu = menu_bar.addMenu('Settings')
