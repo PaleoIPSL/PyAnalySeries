@@ -45,6 +45,12 @@ Wednesday, 06 May, 08:30–10:15 (CEST), Room 0.55
 
 <hr style="border:2px solid gray">
 
+#### Posters
+
+- **ICP15 – 15th International Conference on Paleoceanography**, Bengaluru, India, 31 August – 5 September 2025. *PyAnalySeries Reimagined: A Multi-Platform Revival of a Legacy Tool for Paleoclimate Time Series Analysis*. [View poster (PDF)](posters/PosterICP15LSCE.pdf).
+
+<hr style="border:2px solid gray">
+
 #### Documentation 
 The use of the application is detailed in the following [Wiki page](https://github.com/PaleoIPSL/PyAnalySeries/wiki).
 
